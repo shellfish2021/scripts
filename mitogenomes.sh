@@ -187,3 +187,9 @@ iqtree -s FcC_smatrix.phy -p partition.nex -m MFP+MERGE -B 1000 -T AUTO
 ##Phylobayes建树
 
 mpirun -np 10 pb_mpi -d Fcc_smatrix.phy -cat -gtr -x 10 1000 chain1
+
+##IQtree的GHOST模型（更加注重进化异质性的模型）
+
+#最泛用版本（各参数全部独立运算）
+
+iqtree -s FcC_smatrix.fas -m GTR+FO*H4 -wspm
