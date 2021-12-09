@@ -1,19 +1,10 @@
-#blast
-for species in sjj1_scaffolds
-do
-	makeblastdb -in ${species}.fasta -dbtype nucl -out ${species}.db
-	tblastn -query Pyramidella_dolabrata.fas -db ${species}.db -num_alignments 20 -out ${species}.blastn -evalue 1e-5
-	perl /home/kong/scripts/blast2table2.pl -top -format 10 -expect 0.00001 -index H ${species}.blastn > ${species}.blast2table
-	cat ${species}.blast2table | awk -F "\t" '{print $12}' | sort | uniq > hit.txt 
-	perl /home/kong/scripts/select_contigs.pl -n hit.txt ${species}.fasta ${species}_potential_mito_genome.fasta
-done
+##此脚本由孔老师编写
+##2021-12-9 魏靖乘对该脚本进行了改动与补充并进行了第一次上传
+##希望每个读者看完以后都能对使用线粒体基因组进行系统发育分析的流程有一定的理解，并在一定程度上能适当的运用这些方法解决科学问题。  --魏靖乘 2021.12.9
 
-rename 's/.txt/.fas/g' *.txt
-#rename .txt .fas *.txt
 
 Artemis格式
 替换 (>.*?) .*$ 为 “\1”
-
 
 替换>lcl|DQ238598.1_prot_ABB17317.1_1 [gene=COX1] [protein=cytochrome c oxidase subunit I] [protein_id=ABB17317.1] [location=1..1536] [gbkey=CDS]为COX1
 替换 (>.*?) (.*?) .*$ 为 “>\2”
