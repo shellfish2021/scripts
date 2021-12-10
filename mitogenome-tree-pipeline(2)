@@ -1,0 +1,63 @@
+#2021 12.10 张宁： 我的方法之于第一种方法的区别在于大部分的操作都在liunx系统中完成，方不方便因人而异，这里只想给大家提供更多的思路
+#此脚本有很大的优化空间，欢迎大家来修改
+#如用，需根据个人情况调整
+
+#线粒体基因注释：下列的命令虽麻烦但最后都可以放到一个脚本中一键操作
+
+#第一步利用samtools faidx截取你想注释的基因location
+# ~/mitogenomes/$1 代表你想要注释的线粒体fasta文件
+query=$(head -1 ~/mitogenomes/$1 | awk -F '[>, ]' '{print $2}')
+samtools faidx ~/mitogenomes/$1 $query:$2 > kuihan_A_cox1.cds
+
+#使用变量获取序列名字，之后可以统一命名
+name=$(echo *.cds | awk -F '.' '{print $1}')
+
+#将fasta >后面改成你获取到的名字
+sed -i "s/>.*/>${name}/g" *.cds
+
+#检查一下是否改名成功，且能记录起始密码子和终止密码子
+cat *.cds
+
+#把cds序列变为一行
+nentferner.pl -in=$name.cds -out=$name.nent
+
+#查看序列信息，记录序列长度
+/home/zhangning/scripts/get_fasta_stats.pl $liuyi.nent
+
+#改后缀
+rename .nent .cds $name.nent
+
+#把cds翻译成pep
+transeq -table 5 $name.cds $name.pep
+
+#检查蛋白质序列，并改成之前获取的名字
+cat $name.pep
+sed -i "s/>.*/>${name}/g" $name.pep
+sed -i 's/*//g' $name.pep
+/home/zhangning/scripts/get_fasta_stats.pl $name.pep
+
+#把pep序列变为一行，并把蛋白质序列移动到你想要的文件夹里
+nentferner.pl -in=$name.pep -out=finshed/$name.pep
+
+#再次检查蛋白质序列信息
+cat finshed/$name.pep
+/home/zhangning/scripts/get_fasta_stats.pl finshed/$name.pep
+
+#删除当前目录的pep，把cds序列移动到你想要的文件夹里
+rm $name.pep
+mv $name.cds finshed
+
+#最后你可以将基因分别放在不同的文件，方便使用脚本直接一键操作
+
+for i in co1 co2 co3 cob nad1 nad2 nad3 nad4 nad4L nad5 nad6 atp6
+do
+cat ~/tree_workflow/han_${i}/*.pep > han_30_3_${i}.fa
+sed -i "s/_${i}//g" han_30_3_${i}.fa   #统一名字
+mafft --thread 10 --auto --localpair --maxiterate 1000 han_30_3_${i}.fa > han_30_3_${i}.aln.fa #比对
+trimal -automated1 -in han_30_3_${i}.aln.fa -out han_30_3_${i}.aln.fa.trimal #切除
+nentferner.pl -in=han_30_3_${i}.aln.fa.trimal -out=han_30_3_${i}.aln.fa.trimal.nent #变成一行
+done
+seqkit concat -w 0 cox1.fasta  cox2.fasta cox3.fasta ..........    #连结不同序列
+
+#建树
+iqtree -s FcC_smatrix.phy -m MFP -alrt 1000 -b 1000 -T AUTO
