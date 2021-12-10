@@ -1,6 +1,6 @@
 #2021 12.10 张宁： 我的方法之于第一种方法的区别在于大部分的操作都在liunx系统中完成，方不方便因人而异，这里只想给大家提供更多的思路
 #此脚本有很大的优化空间，欢迎大家来修改
-#如用，需根据个人情况调整
+#如用，需根据个人情况调整，重在思路
 
 #线粒体基因注释：下列的命令虽麻烦但最后都可以放到一个脚本中一键操作
 
@@ -57,7 +57,7 @@ mafft --thread 10 --auto --localpair --maxiterate 1000 han_30_3_${i}.fa > han_30
 trimal -automated1 -in han_30_3_${i}.aln.fa -out han_30_3_${i}.aln.fa.trimal #切除
 nentferner.pl -in=han_30_3_${i}.aln.fa.trimal -out=han_30_3_${i}.aln.fa.trimal.nent #变成一行
 done
-seqkit concat -w 0 cox1.fasta  cox2.fasta cox3.fasta ..........    #连结不同序列
+seqkit concat -w 0 cox1.fasta cox2.fasta cox3.fasta ..........    #连结不同序列
 
 #建树
 iqtree -s FcC_smatrix.phy -m MFP -alrt 1000 -b 1000 -T AUTO
