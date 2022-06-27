@@ -9,13 +9,13 @@ datSpp <- sapply(strsplit(dimnames(dat)[[1]], split="_"), function(x) paste(x[2]
 datDist <- dist.dna(dat, pairwise.deletion = TRUE)#计算数据集的距离矩阵
 datThresh <- localMinima(datDist)#计算数据集中可能存在的阈值
 datClust <- tclust(datDist, threshold = 0.03)#序列在阈值为0.03时的成簇现象，上一步中计算出来的第一个阈值是最可能存在的
-lapply(ausClust, function(x) ausSpp[x])#列出序列的聚集情况
+lapply(datClust, function(x) datSpp[x])#列出序列的聚集情况，查看MOTUs
 #ABGD方法
 在线网站：https://bioinfo.mnhn.fr/abi/public/abgd/abgdweb.html（核苷酸替代模型选用K2P，剩余参数设置为默认）
-linux-command-line：./abgd -m *.haps.fas -d 0 -o output.file #网站上下载安装包，在ABGD目录下运行命令
+linux-command-line：./abgd -m *.haps.fas -d 0 -o output.file #网站上下载ABGD安装包，在ABGD目录下运行命令
 #ASAP方法
 在线网站：https://bioinfo.mnhn.fr/abi/public/asap/asapweb.html
-linux-command-line：./asap -m *.haps.fas -d 0 -o output.file#网站上下载安装包，在ASAP目录下运行命令
+linux-command-line：./asap -m *.haps.fas -d 0 -o output.file#网站上下载ASAP安装包，在ASAP目录下运行命令
 #GMYC方法（在R studio上运行）
 #sGMYC方法
 library(splits)#加载splits包
@@ -37,8 +37,8 @@ raxmlHPC -f a -x 12345 -p 12345 -m GTRGAMMA -T 20 -N 1000 -s mySequences.fas -n 
 #PTP-method(两种分析方法)
 ML分析：mptp --ml --single --tree_file tree.newick --output_file output
 MCMC分析：mptp --mcmc 10000000 --single --mcmc_sample 1000000 --mcmc_burnin 1000000 --mcmc_runs 10 --tree_file tree.newick --output_file output
-#mPTP-method
+#mPTP-method #MCMC的链长可以自行设置
 ML分析：mptp --ml --multi --tree_file tree.newick --output_file output
 MCMC分析：mptp --mcmc 10000000 --multi --mcmc_sample 1000000 --mcmc_burnin 1000000 --mcmc_runs 10 --tree_file tree.newick  --output_file output
 #bPTP-method
-在线网站（https://species.h-its.org/ptp/）
+在线网站（https://species.h-its.org/ptp/）#一般使用默认参数
