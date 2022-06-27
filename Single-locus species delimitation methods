@@ -1,5 +1,6 @@
 #2022.6.16-郭冰玉-中国海洋大学
 #这里主要介绍了单位点物种界定方法（三种基于距离&两种基于树），既包括在线网站也包括linux下的命令行模式，欢迎大家随时补充交流！
+
 #Ad hoc threshold（特定核苷酸阈值法），在R studio上运行命令
 setwd("C:\\My Documents\\R")#建立工作目录
 library(spider)#加载spider包
@@ -10,13 +11,17 @@ datDist <- dist.dna(dat, pairwise.deletion = TRUE)#计算数据集的距离矩�
 datThresh <- localMinima(datDist)#计算数据集中可能存在的阈值
 datClust <- tclust(datDist, threshold = 0.03)#序列在阈值为0.03时的成簇现象，上一步中计算出来的第一个阈值是最可能存在的
 lapply(datClust, function(x) datSpp[x])#列出序列的聚集情况，查看MOTUs
+
 #ABGD方法
 在线网站：https://bioinfo.mnhn.fr/abi/public/abgd/abgdweb.html（核苷酸替代模型选用K2P，剩余参数设置为默认）
 linux-command-line：./abgd -m *.haps.fas -d 0 -o output.file #网站上下载ABGD安装包，在ABGD目录下运行命令
+
 #ASAP方法
 在线网站：https://bioinfo.mnhn.fr/abi/public/asap/asapweb.html
 linux-command-line：./asap -m *.haps.fas -d 0 -o output.file#网站上下载ASAP安装包，在ASAP目录下运行命令
+
 #GMYC方法（在R studio上运行）
+
 #sGMYC方法
 library(splits)#加载splits包
 setwd("C:\\My Documents\\R")#建立工作目录
@@ -24,6 +29,7 @@ file.tree <- read.nexus(file = "file.mcc.nexus")#读取树文件（也可以是n
 file.sgmyc <- gmyc(file.tree, method = "single")#使用gmyc函数
 summary(file.sgmyc)#查看LR、LRT等参数数值
 spec.list(file.sgmyc)#查看物种界定结果
+
 #mGMYC方法
 library(splits)#加载splits包
 setwd("C:\\My Documents\\R")#建立工作目录
@@ -31,14 +37,19 @@ file.tree <- read.nexus(file = "file.mcc.nexus")#读取树文件（也可以是n
 file.mgmyc <- gmyc(file.tree, method = "multiple")
 summary(file.mgmyc)
 spec.list(file.mgmyc)
+
 #PTP方法（包括PTP、mPTP和bPTP三种方法）
+
 采用此算法前，应先采用RAxML构建ML树 
 raxmlHPC -f a -x 12345 -p 12345 -m GTRGAMMA -T 20 -N 1000 -s mySequences.fas -n output.ex
+
 #PTP-method(两种分析方法)
 ML分析：mptp --ml --single --tree_file tree.newick --output_file output
-MCMC分析：mptp --mcmc 10000000 --single --mcmc_sample 1000000 --mcmc_burnin 1000000 --mcmc_runs 10 --tree_file tree.newick --output_file output
-#mPTP-method #MCMC的链长可以自行设置
+MCMC分析：mptp --mcmc 10000000 --single --mcmc_sample 1000000 --mcmc_burnin 1000000 --mcmc_runs 10 --tree_file tree.newick --output_file output#MCMC的链长可以自行设置
+
+#mPTP-method 
 ML分析：mptp --ml --multi --tree_file tree.newick --output_file output
 MCMC分析：mptp --mcmc 10000000 --multi --mcmc_sample 1000000 --mcmc_burnin 1000000 --mcmc_runs 10 --tree_file tree.newick  --output_file output
+
 #bPTP-method
 在线网站（https://species.h-its.org/ptp/）#一般使用默认参数
