@@ -1,0 +1,122 @@
+#!/bin/bash
+
+for FILENAME in *.fas
+do
+perl /home/weijc/scripts/nentferner.pl -in=$FILENAME -out=$FILENAME.nent 
+done
+
+mkdir ML_tree
+mv *.fas.nent ML_tree/
+cd ML_tree
+
+rename .fas.nent .fas *.fas.nent 
+
+sed -i 's/COX3/cox3/g' *.fas
+sed -i 's/ND3/nad3/g' *.fas
+sed -i 's/ND2/nad2/g' *.fas
+sed -i 's/COX1/cox1/g' *.fas
+sed -i 's/COX2/cox2/g' *.fas
+sed -i 's/ATP8/atp8/g' *.fas
+sed -i 's/ATP6/atp6/g' *.fas
+sed -i 's/ND1/nad1/g' *.fas
+sed -i 's/ND6/nad6/g' *.fas
+sed -i 's/CYTB/cob/g' *.fas
+sed -i 's/ND4L/nad4l/g' *.fas
+sed -i 's/ND4/nad4/g' *.fas
+sed -i 's/ND5/nad5/g' *.fas
+
+sed -i 's/NAD1/nad1/g' *.fas
+sed -i 's/NAD2/nad2/g' *.fas
+sed -i 's/NAD3/nad3/g' *.fas
+sed -i 's/NAD4L/nad4l/g' *.fas
+sed -i 's/NAD4/nad4/g' *.fas
+sed -i 's/NAD5/nad5/g' *.fas
+sed -i 's/NAD6/nad6/g' *.fas
+sed -i 's/cytB/cob/g' *.fas
+sed -i 's/COXIII/cox3/g' *.fas
+sed -i 's/COXII/cox2/g' *.fas
+sed -i 's/COXI/cox1/g' *.fas
+sed -i 's/nad4L/nad4l/g' *.fas
+sed -i 's/nad4l/nad7/g' *.fas
+
+cat *.fas > All.fa
+
+grep -A 1 cox1 All.fa > cox1.fasta
+grep -A 1 cox2 All.fa > cox2.fasta
+grep -A 1 cox3 All.fa > cox3.fasta
+grep -A 1 atp6 All.fa > atp6.fasta
+grep -A 1 atp8 All.fa > atp8.fasta
+grep -A 1 nad2 All.fa > nad2.fasta
+grep -A 1 nad5 All.fa > nad5.fasta
+grep -A 1 nad4 All.fa > nad4.fasta      
+grep -A 1 nad7 All.fa > nad4l.fasta
+grep -A 1 cob All.fa > cob.fasta
+grep -A 1 nad6 All.fa > nad6.fasta
+grep -A 1 nad1 All.fa > nad1.fasta
+grep -A 1 nad3 All.fa > nad3.fasta
+
+sed -i 's/nad7/nad4l/g' nad4l.fasta
+
+sed -i '/--/d' *.fasta
+sed -i '/^$/d' *.fasta
+
+for FILENAME in *.fasta
+do
+mafft --thread 10 --auto --localpair --maxiterate 1000 $FILENAME > $FILENAME.aln 
+done
+
+rm -f *.fasta
+rename .fasta.aln .fasta *.fasta.aln
+
+sed -i 's/_atp6//g' *.fasta
+sed -i 's/_cob//g' *.fasta
+sed -i 's/_cox1//g' *.fasta
+sed -i 's/_cox2//g' *.fasta
+sed -i 's/_cox3//g' *.fasta
+sed -i 's/_nad1//g' *.fasta
+sed -i 's/_nad2//g' *.fasta
+sed -i 's/_nad3//g' *.fasta
+sed -i 's/_nad4l//g' *.fasta
+sed -i 's/_nad4//g' *.fasta
+sed -i 's/_nad5//g' *.fasta
+sed -i 's/_nad6//g' *.fasta
+sed -i 's/_atp8//g' *.fasta
+sed -i 's/\_\[gene\=atp6\]//g' *.fasta
+sed -i 's/\_\[gene\=atp8\]//g' *.fasta
+sed -i 's/\_\[gene\=cob\]//g' *.fasta
+sed -i 's/\_\[gene\=cox1\]//g' *.fasta
+sed -i 's/\_\[gene\=cox2\]//g' *.fasta
+sed -i 's/\_\[gene\=cox3\]//g' *.fasta
+sed -i 's/\_\[gene\=nad1\]//g' *.fasta
+sed -i 's/\_\[gene\=nad2\]//g' *.fasta
+sed -i 's/\_\[gene\=nad3\]//g' *.fasta
+sed -i 's/\_\[gene\=nad4l\]//g' *.fasta
+sed -i 's/\_\[gene\=nad4\]//g' *.fasta
+sed -i 's/\_\[gene\=nad5\]//g' *.fasta
+sed -i 's/\_\[gene\=nad6\]//g' *.fasta
+
+echo "Trimming alignments in Gblocks..."
+for FILENAME in *.fasta
+do
+sequences=`grep -c \> $FILENAME`
+half_of_sequences=`expr $sequences / 2`
+b1=`expr $half_of_sequences + 1` #Sets b1 as the floating point calculation (# of sequences)/2 + 1. If (# of sequences)/2 is not a whole number, the output is truncated so that is why 1 is added to each value.
+b2=$b1 #Sets b2 = b1
+b3=8 #default value
+b4=2 #default is 10
+b5=a #default is none
+Gblocks $FILENAME -t=p -p=n -b1=$b1 -b2=$b2 -b3=$b3 -b4=$b4 -b5=$b5 # Executes Gblocks
+done
+echo Done
+echo
+
+#MAFFT 
+for FILENAME in *.fasta-gb
+do
+mafft --thread 10 --auto --localpair --maxiterate 1000 $FILENAME > $FILENAME.aln 
+done
+
+mkdir tree
+mv *.fasta-gb.aln ./tree
+cd tree/
+rename .fasta-gb.aln .fas *.fasta-gb.aln
