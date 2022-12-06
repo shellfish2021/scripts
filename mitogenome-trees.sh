@@ -75,7 +75,7 @@ nohup Trinity --seqType fq \
 for file in *.Trinity.fasta
 do
 makeblastdb -in $file -out $file -dbtype nucl 
-tblastx -query *.seed.fasta -db $file -num_alignments 20 -out $file.blastx -evalue 1e-5
+tblastx -query *.seed.fasta -db $file -num_alignments 20 -out $file.blastx -evalue 1e-5   ##此处或许应该加上genecode
 perl /home/weijc/scripts/blast2table2.pl -top -format 10 -expect 0.00001 -index H -header $file.blastx > $file.blast2table 
 cat $file.blast2table | awk -F "\t" '{print $12}' | sort | uniq > hit.txt 
 perl /home/weijc/scripts/select_contigs.pl -n hit.txt $file potential_mito_genome.fasta
@@ -90,7 +90,7 @@ cat $file.blast2table | awk -F "\t" '{print $11}' | sort | uniq > hit.txt
 perl /home/weijc/scripts/select_contigs.pl -n hit.txt $file potential_mito_genome.fasta
 done
 
-###用bwa回贴reads
+###用bwa回贴reads（来自张宁师兄，很有东西）
 
 bwa index -p huitie Noumeaella_rubrofasciata.nent.fasta                                           ##用拼出来的contigs建立数据库
 bwa mem -t 12 huitie ../SRR3726700_1.fastq.gz ../SRR3726700_2.fastq.gz -o huitie.sam              ##把原始reads往数据库里的contigs回贴
@@ -102,7 +102,7 @@ bedtools bamtobed -i ./sorted_huitie.bam > sorted_huitie.bed
 bamdst -p sorted_huitie.bed -o ./ sorted_huitie.bam                                               ##获得回贴深度文件（检验是否是核基因）
 
 
-##bowtie2获得线粒体基因组
+##bowtie2获得线粒体基因组（来自亓鲁师兄，我没操作过）
 
 mkdir bowtie_base    #创建bowtie_base文件夹 
 mkdir bowtie         #创建bowtie文件夹
