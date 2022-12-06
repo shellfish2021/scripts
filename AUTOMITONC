@@ -1,5 +1,7 @@
 #!/bin/bash
 
+##尚未进行至线粒体基因组系统发育分析最后一步，就不该进行自动化流程  
+
 for FILENAME in *.fas
 do
 perl /home/weijc/scripts/nentferner.pl -in=$FILENAME -out=$FILENAME.nent 
