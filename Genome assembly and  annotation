@@ -1,0 +1,53 @@
+##本操作流程是基于龙红岸老师的生物大数据分析课程整理而成
+##整理人：于怡 2022.12.11
+
+###基因组组装注释###
+
+#spades
+spades.py -k 21,33,55,77 --phred-offset 33 --pe1-1 27_1_1_clean.fq --pe1-2 27_1_2_clean.fq --careful -t 18 -o 27_1_2
+
+#canu
+canu -d ./ -p ciliate genomeSize=10M -nanopore-raw nanopore.filter.fq maxThreads=4 maxMemory=8g
+#-d 输出文件夹 -p 前缀
+
+#polish
+#racon用三代纠错,纠正gap,重复纠错到不能纠错
+minimap2 -ax map-ont -t 8 scaffolds.fasta二代、三代组装好的 nanopore.filter.fq三代测序数据 > nanopore.sam 
+racon -t 8 nanopore.filter.fq原始测序 nanopore.sam输出 scaffolds.fasta组装好 > racon1.fa
+
+#pilon 用二代数据纠错，纠正碱基
+bwa index -p genome ../07_racon/racon1.fa
+bwa mem -t 2 genome ../illumina_read/Illumina.R1.fq  ../illumina_read/Illumina.R2.fq | samtools view -@ 2 -bS -F 12 > illumina.bam
+samtools sort -@ 2 illumina.bam illumina.sort.bam
+samtools index illumina.sort.bam
+pilon --threads 2 --genome scaffold.fasta --frags illumina.sort.bam --output pilon1  &> pilon.log
+
+#评估组装质量
+#quast
+quast ciliate.contigs.fasta scaffolds.fasta racon1.fa pilon1.fasta -o all_genome_quast
+ 
+#busco 
+busco -i ../08_pilon/pilon1.fasta -c 8线程 -m genome -l mollusca_odb10更改数据库 -o scaffolds_genome_t --augustus-species tetrahymena可删
+busco --list-datasets 查看数据库，尽可能选择详细的门类
+augustus网站有的物种可加，无不用加
+
+#基因组结构注释
+#stringtie
+stringtie -p 8 -o all.stringtie.gff3 ../01_Trinity/all.bam  #assemble of RNA-Seq alignments into potential transcripts
+gff文件 输入/ 查找内容
+
+#break2
+braker.pl --cores=8 --species=inflata --genome=inflata.rehead.fa --bam=all.bam  #annotation using braker2 with all.bam
+#--species= 运行文件起名
+
+#Augustus
+autoAug.pl --species=inflata --genome=inflata.rehead.fa  --cdna=Trinity-all.fasta --pasa –useGMAPforPASA   #annotation
+autoAug.pl --species=uro_01A --genome=/apps/users/panjiao/Uronema/RNA/augustus_20201119/autoAug/seq/genome_clean.fa --useexisting --hints=/apps/users/panjiao/Uronema/RNA/augustus_20201119/autoAug/hints/hints.E.gff  -v -v --pasa --index=1
+autoAug.pl --species=uro_01A --genome=/apps/users/panjiao/Uronema/RNA/augustus_20201119/autoAug/seq/genome_clean.fa --useexisting --hints=/apps/users/panjiao/Uronema/RNA/augustus_20201119/autoAug/hints/hints.E.gff --estali=/apps/users/panjiao/Uronema/RNA/augustus_20201119/autoAug/cdna/cdna.f.psl -v -v -v --pasa --index=2
+autoAug.pl --species=uro_01A --genome=/apps/users/panjiao/Uronema/RNA/augustus_20201119/autoAug/seq/genome_clean.fa --useexisting --hints=/apps/users/panjiao/Uronema/RNA/augustus_20201119/autoAug/hints/hints.E.gff  -v -v -v --pasa --index=3
+跑到中间结束 运行shell中 .sh文件，所有运行结束之后跑 finisheed命令
+
+#rnammer
+~/rnammer -S euk -multi -f rRNA.fasta -h rRNA.hmmreport -xml rRNA.xml -gff rRNA.gff2 ../genome/inflata.rehead.fa
+tRNAscan-SE -E -o inflata_tRNA1.out -f inflata_tRNA.ss -m inflata_tRNA.stats ../genome/inflata.rehead.fa   #find tRNA sequences
+#-o 输出 -f tRNA二级 -m 统计结果文件
