@@ -1,0 +1,22 @@
+##本操作流程是基于龙红岸老师的生物大数据分析课程整理而成
+##整理人：于怡 2022.12.11
+
+###二代survey分析###
+
+#jellyfish查看基因组基本数据
+jellyfish count -m 33 -s 5M -t 8 -C Illumina.R1.fq Illumina.R2.fq -o 33.jf #计算kmer 分布
+# -m kmer数值 -s 基因组大小
+jellyfish histo -t 25 21.jf > 21.histo #统计kmer频数分布
+
+#R画图 
+R
+mer_count <- read.table("21.histo")
+plot(mer_count[5:200,],type="l") #查看主峰 为测了多少乘
+q()
+
+#运行perl
+perl estimate_genome_size.pl --kmer=19 --peak=32 --fastq=L1_1.fq L1_2.fq #估计基因组大小
+
+
+#查看基因组杂合度 使用genomescope.R脚本
+/genomescope/genomescope.R 21.histo  19 150 result
