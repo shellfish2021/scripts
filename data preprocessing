@@ -1,0 +1,43 @@
+##本操作流程是基于龙红岸老师的生物大数据分析课程整理而成
+##整理人：于怡 2022.9.4
+
+###数据预处理###
+#二代数据质控
+mkdir jieguo #新建生成结果的储存目录
+fastqc shuru.R1.raw.fastq shuru.R2.raw.fastq -t 4 -o jieguo
+# -t线程 -o生成结果储存目录 -q安静运行 
+
+
+#二代数据过滤,去接头
+fastp -i shuru_R1_raw.fastq -o jieguo_R1_fastp.fastq -I shuru_R2_raw.fastq -O jieguo_R2_fastp.fastq -h jieguo.html -w 4
+# -i输入 -o输出 -I另一端输入 -O另一端输出 -w线程 -h输出网页文件
+
+#三代数据质量评估
+mkdir jieguo #新建生成结果的储存目录
+NanoPlot -t 4 --color blue --N50 --title “Test” --downsample 500 --minlength 500 --fastq shuru.fastq -o jieguo
+#注意NanoPlot大小写 -t线程数 --color可视化图中点的颜色 --N50在直方图中显示N50标识 --title命名可视化图标题 --downsample只在输入文件中随机抽取N条序列进行处理 -- minlength忽略N bp以下的reads --fastq输入的文件为fastq格式 -o生成结果储存目录 
+
+#三代过滤
+Nanoplot -t 2 --color blue --N50 --title "Test" --downsample 500 --fastq rawdata/nanopore.data.fastq -o nano-output
+NanoFilt -q 10设置quality -1000 >输出
+
+#三代数据去污染
+minimap2 长序列比对
+minimap2 -ax  map-ont 比对参考序列文件 输入文件 -t 线程数|samtools view -@ 2 -bS -f 4单端测序|samtools sort -@ 2|samtools fastq -@ 2 > 输出文件名
+
+#三代数据过滤
+NanoFilt -q 10设置quality -1000 >输出
+
+#序列质控,去污染 insert size#
+bwa index wuran.fasta #构建参考基因组索引
+bwa mem -t 4 wuran.fasta jieguo_R1_fastp.fastq jieguo_R2_fastp.fastq > jieguo.sam  #mapping data to genome
+
+bwa-mem2 同 bwa
+bwa index -p 前缀命名 E_coli_1655.fasta  #make index 构建参考基因组索引
+bwa mem -t 4 E_coli_1655.fasta rawdata/E.coli_PE150_10000_R1.fastp.fastq rawdata/E.coli_PE150_10000_R2.fastp.fastq > E.coli.sam  #mapping data to genome
+
+samtools view -bhS -@ 线程数 -f 12找未比对上的，双端测序 -o E.coli.bam E.coli.sam    #convert sam to bam
+samtools sort E.coli.bam -o E.coli.sort.bam    #sort bam
+samtools fastq E.coli.sort.bam > E.coli.sort.bam.stat #bam转为fastq
+samtools stats E.coli.sort.bam > E.coli.sort.bam.stat   #Statistical results
+grep "SN.*insert size" E.coli.sort.bam.stat   #check the insert size
